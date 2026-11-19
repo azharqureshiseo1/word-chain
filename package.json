@@ -1,0 +1,22 @@
+{
+  "name": "word-chain",
+  "version": "1.0.0",
+  "description": "Word Chain - free daily word chain game (static site)",
+  "scripts": {
+    "test": "node tests/core.test.mjs",
+    "build": "node scripts/build.mjs",
+    "serve": "npx --yes serve dist -l 8080",
+    "icons": "node scripts/icons.mjs"
+  },
+  "dependencies": {
+    "wordlist-english": "^1.2.1"
+  },
+  "type": "module",
+  "devDependencies": {
+    "sharp": "^0.35.5"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  }
+}
