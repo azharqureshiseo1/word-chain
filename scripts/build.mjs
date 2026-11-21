@@ -6,11 +6,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import words from 'wordlist-english';
 import { SITE } from './config.mjs';
+import { legalPages } from './legal-pages.mjs';
 import { buildDailyPool, generateChain, puzzleNumber, isoFromNumber, localISO } from '../site/assets/js/core.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist');
-const TODAY = process.env.BUILD_DATE || localISO(new Date());
+// "Today" = the current date in US Pacific time, so answer pages never appear before a US player's day starts.
+const TODAY = process.env.BUILD_DATE || new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date());
 const TODAY_N = puzzleNumber(TODAY);
 const VERSION = Date.now().toString(36); // cache-busting for CSS/JS
 
@@ -51,6 +53,9 @@ function layout({ path: p, title, description, h1, intro = '', body, schema = []
 <html lang="en">
 <head>
 <meta charset="utf-8">
+${SITE.gtmId ? `<!-- Google Tag Manager (skipped when the browser sends Global Privacy Control or Do Not Track) -->
+<script>if(!(navigator.globalPrivacyControl||navigator.doNotTrack=='1'||window.doNotTrack=='1'))(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${SITE.gtmId}');</script>
+<!-- End Google Tag Manager -->` : ''}
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
@@ -90,7 +95,8 @@ ${body}
 </div>
 </main>
 <footer class="site-footer">
-  <p><a href="/how-to-play/">How to play</a> · <a href="/word-chain-examples/">Word chain examples</a> · <a href="/answers/">Answers archive</a> · <a href="/about/">About</a> · <a href="/privacy/">Privacy</a></p>
+  <p><a href="/how-to-play/">How to play</a> · <a href="/word-chain-examples/">Word chain examples</a> · <a href="/answers/">Answers archive</a></p>
+  <p><a href="/about/">About</a> · <a href="/contact/">Contact</a> · <a href="/privacy-policy/">Privacy Policy</a> · <a href="/cookie-policy/">Cookie Policy</a> · <a href="/terms/">Terms</a> · <a href="/disclaimer/">Disclaimer</a></p>
   <p>© ${TODAY.slice(0, 4)} ${esc(SITE.name)}. Free to play, no sign-up. Not affiliated with any TV show or publisher.</p>
 </footer>
 <div id="live" class="sr-only" aria-live="polite"></div>
@@ -277,11 +283,11 @@ add('/answers/', layout({
   body: `<ul class="archive">${answerDays.map(iso => `<li><a href="/answers/${iso}/">Word Chain #${puzzleNumber(iso)} – ${shortDate(iso)}</a>${iso === TODAY ? ' <span class="tag">Today</span>' : ''}</li>`).join('')}</ul>`,
 }));
 
-// ABOUT / PRIVACY / 404 ----------------------------------------------------
-add('/about/', layout({ path: '/about/', title: `About ${SITE.name}`, description: `${SITE.name} is a free, ad-light word chain game you can play in any browser.`, h1: `About ${SITE.name}`, crumbs: [{ name: 'About', p: '/about/' }],
-  body: `<p>${SITE.name} is an independent, free word game. Every chain is checked so that each pair of words makes a real compound word or everyday phrase. Spotted a bad link? Email <a href="mailto:${SITE.contactEmail}">${SITE.contactEmail}</a> and we will fix it.</p>` }));
-add('/privacy/', layout({ path: '/privacy/', title: 'Privacy Policy', description: `How ${SITE.name} handles data: no accounts, no cookies for tracking, progress saved only on your device.`, h1: 'Privacy Policy', crumbs: [{ name: 'Privacy', p: '/privacy/' }],
-  body: `<p>We do not ask for an account or personal details. Your scores, streak and settings are saved only in your own browser (localStorage) and never sent to us. ${SITE.analyticsScript ? 'We use privacy-friendly, cookie-free analytics that count visits without identifying you.' : 'We do not use analytics cookies.'} Questions: <a href="mailto:${SITE.contactEmail}">${SITE.contactEmail}</a>.</p>` }));
+// ABOUT / CONTACT / POLICIES (scripts/legal-pages.mjs) / 404 ----------------------------------------------------
+for (const lp of legalPages) add(lp.path, layout({
+  path: lp.path, title: lp.title, description: lp.description, h1: lp.h1, body: lp.body,
+  schema: lp.schema || [], crumbs: [{ name: lp.crumb, p: lp.path }],
+}));
 add('/404.html', layout({ path: '/404.html', title: 'Page not found', description: 'This page does not exist.', h1: 'Broken chain!', robots: 'noindex', body: `<p>That page is missing. <a href="/">Play today’s word chain</a> instead.</p>` }));
 
 // ---------------------------------------------------------------- write

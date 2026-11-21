@@ -27,6 +27,8 @@ const live = document.getElementById('live');
 const announce = msg => { if (live) { live.textContent = ''; setTimeout(() => (live.textContent = msg), 30); } };
 const settings = Object.assign({ sound: false }, store.get('wc-settings', {}));
 const saveSettings = () => store.set('wc-settings', settings);
+// analytics: push game events to GTM's dataLayer (no-op if GTM is not installed)
+const track = (event, params = {}) => { try { (window.dataLayer ||= []).push({ event, game_mode: MODE, ...params }); } catch {} };
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let audio;
@@ -52,6 +54,7 @@ function modal(title, ...content) {
   return d;
 }
 async function share(text) {
+  track('wc_share');
   try {
     if (navigator.share && matchMedia('(pointer:coarse)').matches) { await navigator.share({ text }); return; }
     await navigator.clipboard.writeText(text); announce('Result copied to clipboard'); toast('Copied to clipboard');
@@ -147,6 +150,7 @@ function chainGame(mount, { chain, title, saved, onChange, onFinish, extraButton
   }
   function hint() {
     if (st.done || active < 0) return;
+    track('wc_hint');
     reveal(active); typed = ''; afterMove(false);
   }
   function submit() {
@@ -217,7 +221,7 @@ async function daily() {
     chain, title: `#${num} · ${isToday ? 'Today' : iso}`, saved: store.get(key),
     extraButtons: [statsBtn],
     onChange: st => store.set(key, st),
-    onFinish: st => { if (isToday) recordDaily(iso, score(st.reveals.slice(1, -1))); showResult(st); },
+    onFinish: st => { track('wc_chain_complete', { score: score(st.reveals.slice(1, -1)), puzzle_number: num, is_today: isToday }); if (isToday) recordDaily(iso, score(st.reveals.slice(1, -1))); showResult(st); },
   });
   if (g.state.done) showResult(g.state, true);
 
@@ -276,6 +280,7 @@ function unlimited() {
       onFinish: st => {
         const rev = st.reveals.slice(1, -1), pts = Math.round(score(rev) * 5 / rev.length);
         opts.played++; opts.total += pts; store.set('wc-unl', opts);
+        track('wc_chain_complete', { score: pts, chain_length: chain.length });
         modal('Chain complete!', h('p', { class: 'result-grid' }, rev.map(rowEmoji).join('')),
           h('p', {}, `${pts}/100 · average ${Math.round(opts.total / opts.played)} over ${opts.played} chains`),
           h('p', {}, chain.map(w => w.toUpperCase()).join(' → ')),
@@ -347,6 +352,7 @@ async function classic() {
     playing = false; cancelAnimationFrame(raf);
     input.disabled = go.disabled = true;
     if (myCount > best()) store.set('wc-classic-best', myCount);
+    track('wc_classic_end', { score: myCount });
     showScore();
     const text = `I chained ${myCount} words in Classic Word Chain ⛓️\n${location.origin}/classic/`;
     modal(reason, h('p', {}, `You played ${myCount} word${myCount === 1 ? '' : 's'}. Best: ${best()}.`),
@@ -380,6 +386,7 @@ function generator() {
       h('ol', {}, chains.map(c => h('li', {}, c.map(w => w.toUpperCase()).join(' → '))))));
   };
   const gen = () => {
+    track('wc_generate', { chain_length: +len.value });
     chains = Array.from({ length: +count.value }, () => generateChain((Math.random() * 2 ** 31) | 0, +len.value)).filter(Boolean);
     draw();
   };

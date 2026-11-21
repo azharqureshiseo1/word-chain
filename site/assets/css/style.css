@@ -124,3 +124,15 @@ dialog::backdrop{background:rgba(10,8,20,.55)}
   .kbd button{min-height:46px}
   .g-actions{margin:.4rem 0}
 }
+
+/* policy tables + contact form */
+.table-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:.9rem}
+th,td{border:1px solid var(--line);padding:.45rem .55rem;text-align:left;vertical-align:top}
+th{background:var(--tile)}
+code{font-size:.85em;background:var(--tile);padding:0 .25rem;border-radius:4px}
+.content h3{font-size:1.05rem;margin:1rem 0 .3rem}
+.contact-form{display:grid;gap:.8rem;max-width:32rem}
+.contact-form label{display:grid;gap:.25rem;font-weight:600}
+.contact-form textarea{font:inherit;padding:.5rem;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--text)}
+.contact-form button{justify-self:start}

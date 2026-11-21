@@ -129,7 +129,7 @@ export function shareText({ number, reveals, url }) {
   return `Word Chain #${number} — ${score(reveals)}/100\n${reveals.map(rowEmoji).join('')}\n${url}`;
 }
 
-/** display helper: shows how two words link, e.g. a "fireworks" style hint */
+/** display helper: CHAIN + REACTION -> "chain reaction" or "fireworks" style hint */
 export function linkLabel(a, b) { return `${a.toUpperCase()} + ${b.toUpperCase()}`; }
 
 // ---------- classic (last-letter) mode helpers ----------
